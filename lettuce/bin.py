@@ -51,6 +51,12 @@ def main(args=sys.argv[1:]):
                       help='Write JUnit XML to this file. Defaults to '
                       'lettucetests.xml')
 
+    parser.add_option("-t", "--tags",
+                      dest="tags",
+                      default=None,
+                      type="string",
+                      help='Comma separated list of tags to run')
+
     options, args = parser.parse_args()
     if args:
         base_path = os.path.abspath(args[0])
@@ -66,6 +72,7 @@ def main(args=sys.argv[1:]):
         verbosity=options.verbosity,
         enable_xunit=options.enable_xunit,
         xunit_filename=options.xunit_file,
+        tags=options.tags,
     )
 
     result = runner.run()
