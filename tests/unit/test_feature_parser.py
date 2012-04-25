@@ -340,7 +340,8 @@ def test_single_scenario_single_tag():
     assert that(first_scenario.tags).deep_equals([
         'many', 'other', 'basic', 'tags', 'here', ':)'])
 
-def test_single_feature_single_tag():
+
+def test_single_feature_many_tags():
     "Features should be parsed with tags"
     feature = Feature.from_string(FEATURE12)
 
