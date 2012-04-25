@@ -158,6 +158,16 @@ Feature: Yay tags
     Then it can be inspected from within the object
 """
 
+FEATURE12 = """
+@feature_tag @and
+@some @more @tags @o.O
+Feature: Pants is pants
+  @do_not_want @evil_tag
+  Scenario: Guten Tagen
+    Given I have typed stuff up there
+    Then I can see it down there
+"""
+
 
 def test_feature_has_repr():
     "Feature implements __repr__ nicely"
@@ -329,3 +339,10 @@ def test_single_scenario_single_tag():
 
     assert that(first_scenario.tags).deep_equals([
         'many', 'other', 'basic', 'tags', 'here', ':)'])
+
+def test_single_feature_single_tag():
+    "Features should be parsed with tags"
+    feature = Feature.from_string(FEATURE12)
+
+    assert that(feature.tags).deep_equals(['feature_tag', 'and',
+        'some', 'more', 'tags', 'o.O',])

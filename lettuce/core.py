@@ -725,13 +725,14 @@ class Feature(object):
     described_at = None
 
     def __init__(self, name, remaining_lines, with_file, original_string,
-                 language=None):
+                 language=None, tagstring=''):
 
         if not language:
             language = language()
 
-        self.name = name
         self.language = language
+        self.name = name
+        self.remaining_lines = remaining_lines
 
         self.scenarios, self.description = self._parse_remaining_lines(
             remaining_lines,
@@ -740,12 +741,16 @@ class Feature(object):
 
         self.original_string = original_string
 
+        self.tags = self._extract_tag(tagstring)
+
         if with_file:
             feature_definition = FeatureDescription(self,
                                                     with_file,
                                                     original_string,
                                                     language)
             self._set_definition(feature_definition)
+
+
 
         self._add_myself_to_scenarios()
 
@@ -766,6 +771,12 @@ class Feature(object):
     def _add_myself_to_scenarios(self):
         for scenario in self.scenarios:
             scenario.feature = self
+
+    def _extract_tag(self, item):
+        if not item:
+            return []
+        regex = re.compile(r'[@](\S+)')
+        return regex.findall(item)
 
     def __repr__(self):
         return u'<%s: "%s">' % (self.language.first_of_feature, self.name)
@@ -801,19 +812,26 @@ class Feature(object):
             raise LettuceSyntaxError(with_file,
                 'Features must have a name. e.g: "Feature: This is my name"')
 
+        tags = ''
         while lines:
             matched = re.search(r'%s:(.*)' % language.feature, lines[0], re.I)
             if matched:
                 name = matched.groups()[0].strip()
                 break
-
-            lines.pop(0)
+             #Pros: Enforces feature tags starting at column 0, but interpreting email addresses as tags
+             #Cons: Enforces feature tags starting at column 0
+            if lines[0][0] == '@':
+                tags += lines.pop(0) + ' '
+            else:
+                lines.pop(0)
 
         feature = new_feature(name=name,
                               remaining_lines=lines,
                               with_file=with_file,
                               original_string=string,
-                              language=language)
+                              language=language,
+                              tagstring=tags,
+                            )
         return feature
 
     @classmethod
