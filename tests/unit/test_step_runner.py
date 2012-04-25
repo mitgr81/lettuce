@@ -293,13 +293,13 @@ def test_feature_can_run_only_specified_scenarios():
 
     feature = Feature.from_string(FEATURE7)
 
-    scenarios_ran = []
+    scenarios_run = []
     @after.each_scenario
     def just_register(scenario):
-        scenarios_ran.append(scenario.name)
+        scenarios_run.append(scenario.name)
 
     feature.run(scenarios=(2, 5))
-    assert_equals(scenarios_ran, ['2nd one', '5th one'])
+    assert_equals(scenarios_run, ['2nd one', '5th one'])
 
 
 @with_setup(step_runner_environ)
@@ -477,3 +477,141 @@ def test_invalid_regex_raise_an_error():
         def step_with_bad_regex(step):
             pass
     assert_raises(StepLoadingError, load_step)
+
+
+FEATURE10 = """
+@decoy_tag @feature_tag @another_decoy
+Feature: When using a feature tag, all scenarios within the feature run
+  Scenario: A scenario that should run
+    Given I have a defined step
+  Scenario: Another scenario that should run
+    Given I have a defined step
+"""
+
+FEATURE11 = """
+@scenario_tag_but_not
+Feature: When using scenario tags, a tagged scenario should run
+  @decoy_tag @scenario_tag
+  Scenario: The only scenario that should run
+    Given I have a defined step
+
+  @nacho_tag
+  Scenario: This scenario should not run
+    Given I have a defined step
+"""
+
+FEATURE12 = """
+Feature: When using scenario tags only the scenarios with matching tags should run
+   @run_this
+   Scenario: I want this scenario
+      Given I have a defined step
+
+   @dont_run_this @smite
+   Scenario: Sometimes I don't want to be included
+      Given I have a defined step
+
+   @you @can @run_this @though
+   Scenario: I do want this scenario too
+      Given I have a defined step
+
+   Scenario: Don't run the untagged scenario
+      Given I have a defined step
+"""
+
+@with_setup(step_runner_environ)
+def test_tagged_feature_runs_if_using_tag():
+    "Features can run with tags"
+
+    feature = Feature.from_string(FEATURE10)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(tags=['feature_tag'])
+    assert_equals(['A scenario that should run', 'Another scenario that should run'], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_mistagged_feature_does_not_run():
+    "Features do not run if using a tag and they don't match at least one"
+
+    feature = Feature.from_string(FEATURE10)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(tags=['bananas'])
+    assert_equals([], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_untagged_feature_does_not_run_if_using_tag():
+    "Features features do not run if not tagged and a tag is specified"
+
+    feature = Feature.from_string(FEATURE7)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(tags=['any_tag_really'])
+    assert_equals([], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_tagged_scenario_runs_if_using_tag():
+    "Scenarios can run with scenario-level tags"
+
+    feature = Feature.from_string(FEATURE11)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(tags=['scenario_tag'])
+    assert_equals(['The only scenario that should run'], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_mistagged_scenarios_do_not_run_if_using_tag():
+    "Scenarios that do not match the given tag will not run"
+
+    feature = Feature.from_string(FEATURE11)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(tags=['invalid_tag_of_doom'])
+    assert_equals([], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_only_matching_scenarios_run():
+    "Scenarios run if and only if they have a matching tag when tags are being used"
+
+    feature = Feature.from_string(FEATURE12)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(tags=['run_this'])
+    assert_equals(['I want this scenario', 'I do want this scenario too'], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_only_matching_scenarios_run_multiple_tags():
+    "Scenarios run if and only if they have a matching tag when multiple tags are being used"
+
+    feature = Feature.from_string(FEATURE12)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(tags=['run_this', 'smite'])
+    assert_equals(['I want this scenario', "Sometimes I don't want to be included", 'I do want this scenario too'], scenarios_run)

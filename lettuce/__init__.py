@@ -84,7 +84,7 @@ class Runner(object):
         self.loader = fs.FeatureLoader(base_path)
         self.verbosity = verbosity
         self.scenarios = scenarios and map(int, scenarios.split(",")) or None
-        self.tags = tags and map(lambda tag: unicode(tag.strip()), tags.split(",")) or []
+        self.tags = tags and map(lambda tag: unicode(tag.strip(' @')), tags.split(",")) or []
 
         sys.path.remove(base_path)
 
@@ -134,7 +134,7 @@ class Runner(object):
             for filename in features_files:
                 feature = Feature.from_file(filename)
                 results.append(
-                    feature.run(self.scenarios))
+                    feature.run(self.scenarios, tags=self.tags))
 
         except exceptions.LettuceSyntaxError, e:
             sys.stderr.write(e.msg)

@@ -168,6 +168,20 @@ Feature: Pants is pants
     Then I can see it down there
 """
 
+FEATURE13 = """
+@feature_tag
+Feature: Pants is pants
+  @scenario_one_tag
+  Scenario: Guten Tagen
+    Given I have typed stuff up there
+    Then I can see it down there
+
+  @scenario_two_tag
+  Scenario: Guten Tagen Dos
+    Given I have typed stuff up there
+    Then I can see it down there
+"""
+
 
 def test_feature_has_repr():
     "Feature implements __repr__ nicely"
@@ -347,3 +361,10 @@ def test_single_feature_many_tags():
 
     assert that(feature.tags).deep_equals(['feature_tag', 'and',
         'some', 'more', 'tags', 'o.O',])
+
+def test_multiple_scenarios_in_feature_only_use_their_own_tags():
+    "All scenarios in a feature should only use their own tags"
+    feature = Feature.from_string(FEATURE13)
+
+    assert that(feature.scenarios[0].tags).deep_equals(['scenario_one_tag'])
+    assert that(feature.scenarios[1].tags).deep_equals(['scenario_two_tag'])

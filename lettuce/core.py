@@ -519,10 +519,8 @@ class Scenario(object):
             self.steps, self.outlines, with_file, original_string))
         self._add_myself_to_steps()
 
-        if original_string and '@' in self.original_string:
-            self.tags = self._find_tags()
-        else:
-            self.tags = []
+
+        self.tags = self._find_tags()
 
     @property
     def max_length(self):
@@ -635,15 +633,29 @@ class Scenario(object):
             step.scenario = self
 
     def _find_tags(self):
-        first_line = self.remaining_lines[0]
+        if not self.original_string or '@' not in self.original_string:
+            return []
+        my_line = '%s: %s' % (self.language.scenario, self.name)
         trim = lambda x: x.strip()
         old_lines = map(trim, self.original_string.splitlines())
         tag_lines = []
-        if first_line in old_lines:
-            tag_lines = old_lines[:old_lines.index(first_line)-1]
+        if my_line in old_lines:
+            my_index = old_lines.index(my_line) -1
+            for line_index in range(my_index, -1, -1):
+                this_line = old_lines[line_index]
+                if this_line == '' or '@' in this_line:
+                    tag_lines.append(this_line)
+                elif "%s:" % self.language.feature in this_line or \
+                     "%s:" % self.language.scenario in this_line:
+                    break #reached the feature or other scenario, may want a better way to do this
+                else:
+                    continue
 
         if tag_lines:
-            return list(chain(*map(self._extract_tag, tag_lines)))
+            tag_lines.reverse() #just for unit tests :P
+            tags = list(chain(*map(self._extract_tag, tag_lines)))
+            return tags
+        return []
 
     def _extract_tag(self, item):
         regex = re.compile(r'[@](\S+)')
@@ -876,7 +888,7 @@ class Feature(object):
 
         return scenarios, description
 
-    def run(self, scenarios=None, ignore_case=True):
+    def run(self, scenarios=None, ignore_case=True, tags=[]):
         call_hook('before_each', 'feature', self)
         scenarios_ran = []
 
@@ -889,7 +901,10 @@ class Feature(object):
         for index, scenario in enumerate(self.scenarios):
             if scenarios_to_run and (index + 1) not in scenarios_to_run:
                 continue
+            all_tags = set(scenario.tags).union(self.tags)
 
+            if tags and len(set(tags).intersection(all_tags)) == 0:
+                continue
             scenarios_ran.extend(scenario.run(ignore_case))
 
         call_hook('after_each', 'feature', self)
