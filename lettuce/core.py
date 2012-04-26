@@ -888,7 +888,7 @@ class Feature(object):
 
         return scenarios, description
 
-    def run(self, scenarios=None, ignore_case=True, tags=[]):
+    def run(self, scenarios=None, ignore_case=True, tags=[], exclude_tags=[]):
         call_hook('before_each', 'feature', self)
         scenarios_ran = []
 
@@ -902,8 +902,12 @@ class Feature(object):
             if scenarios_to_run and (index + 1) not in scenarios_to_run:
                 continue
             all_tags = set(scenario.tags).union(self.tags)
+            matching_include_tags = set(tags).intersection(all_tags)
+            matching_exclude_tags = set(exclude_tags).intersection(all_tags)
 
-            if tags and len(set(tags).intersection(all_tags)) == 0:
+            if tags and len(matching_include_tags) == 0:
+                continue
+            if exclude_tags and len(matching_exclude_tags) != 0:
                 continue
             scenarios_ran.extend(scenario.run(ignore_case))
 

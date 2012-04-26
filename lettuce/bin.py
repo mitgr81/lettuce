@@ -57,6 +57,12 @@ def main(args=sys.argv[1:]):
                       type="string",
                       help='Comma separated list of tags to run')
 
+    parser.add_option("-x", "--exclude-tags",
+                      dest="exclude_tags",
+                      default=None,
+                      type="string",
+                      help='Comma separated list of tags to exclude from runnning')
+
     options, args = parser.parse_args()
     if args:
         base_path = os.path.abspath(args[0])
@@ -73,6 +79,7 @@ def main(args=sys.argv[1:]):
         enable_xunit=options.enable_xunit,
         xunit_filename=options.xunit_file,
         tags=options.tags,
+        exclude_tags=options.exclude_tags,
     )
 
     result = runner.run()

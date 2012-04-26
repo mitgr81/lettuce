@@ -615,3 +615,30 @@ def test_only_matching_scenarios_run_multiple_tags():
 
     feature.run(tags=['run_this', 'smite'])
     assert_equals(['I want this scenario', "Sometimes I don't want to be included", 'I do want this scenario too'], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_features_dont_run_if_exclude_tag_excludes_them():
+    "Features don't run if the user passed an exclude tag that excludes them"
+    feature = Feature.from_string(FEATURE10)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(exclude_tags=['decoy_tag'])
+    assert_equals([], scenarios_run)
+
+@with_setup(step_runner_environ)
+def test_scenarios_dont_run_if_exclude_tag_excludes_them():
+    "Scenarios don't run if the user passed an exclude tag that excludes them"
+    feature = Feature.from_string(FEATURE12)
+
+    scenarios_run = []
+    @after.each_scenario
+    def just_register(scenario):
+        scenarios_run.append(scenario.name)
+
+    feature.run(exclude_tags=['run_this'])
+    assert_equals(["Sometimes I don't want to be included", "Don't run the untagged scenario"], scenarios_run)
+
