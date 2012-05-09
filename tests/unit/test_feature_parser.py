@@ -175,6 +175,9 @@ Feature: Pants is pants
   Scenario: Guten Tagen
     Given I have typed stuff up there
     Then I can see it down there
+    And It doesn't break if I have a table
+    | Some | Keys   |
+    | With | Values |
 
   @scenario_two_tag
   Scenario: Guten Tagen Dos
@@ -368,3 +371,8 @@ def test_multiple_scenarios_in_feature_only_use_their_own_tags():
 
     assert that(feature.scenarios[0].tags).deep_equals(['scenario_one_tag'])
     assert that(feature.scenarios[1].tags).deep_equals(['scenario_two_tag'])
+
+def test_multiple_scenarios_in_feature_do_not_include_subsequent_tags_in_steps():
+    "Scenarios should not parse tags as steps"
+    feature = Feature.from_string(FEATURE13)
+    assert that(len(feature.scenarios[0].steps)).equals(3)

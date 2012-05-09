@@ -461,8 +461,9 @@ class Step(object):
                 step_strings[-1] += "\n%s" % line
             elif strings.wise_startswith(line, u"|") or in_multiline:
                 step_strings[-1] += "\n%s" % line
-            else:
+            elif line[0] != '@':
                 step_strings.append(line)
+
 
         mkargs = lambda s: [s, filename, original_string]
         return [klass.from_string(*mkargs(s)) for s in step_strings]
